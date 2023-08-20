@@ -4,6 +4,7 @@
 """
 import unittest
 from models.base_model import BaseModel
+from models.engine.file_storage import FileStorage
 
 
 class TestBase(unittest.TestCase):
