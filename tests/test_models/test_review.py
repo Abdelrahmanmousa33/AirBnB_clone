@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 """
-    This module contains tests for the file named file_storage.py
+    This module contains tests for the file named base_model.py
 """
 import unittest
-from models.review import Review
+from models.state import State
 
 
-class TestReview(unittest.TestCase):
+class TestState(unittest.TestCase):
     """
         test for class (base_models)
     """
@@ -27,14 +27,10 @@ class TestReview(unittest.TestCase):
         """
             test for (init), (str), (save) method
         """
-        sample_1 = Review()
-        self.assertIsNotNone(sample_1.user_id)
-        self.assertIsNotNone(sample_1.text)
-        self.assertIsNotNone(sample_1.place_id)
-        sample_1.name = "Bisi"
-        self.assertIsInstance(sample_1.user_id, str)
-        self.assertIsInstance(sample_1.text, str)
-        self.assertTrue(sample_1.name == "Bisi")
+        sample_1 = State()
+        self.assertIsNotNone(sample_1.name)
+        sample_1.name = "Osun"
+        self.assertTrue(sample_1.name == "Osun")
         self.assertIsNotNone(sample_1.id)
         self.assertIsNotNone(sample_1.created_at)
         self.assertIsNotNone(sample_1.updated_at)
@@ -43,10 +39,10 @@ class TestReview(unittest.TestCase):
         """
             test for (to_dict) method
         """
-        sample_2 = Review()
+        sample_2 = State()
         self.assertIsInstance(sample_2.to_dict(), dict)
         saved_dict = sample_2.to_dict()
-        sample_3 = Review(**saved_dict)
+        sample_3 = State(**saved_dict)
         self.assertFalse(sample_3 == sample_2)
         self.assertTrue(sample_3.id == sample_2.id)
         self.assertTrue(sample_3.created_at == sample_2.created_at)
