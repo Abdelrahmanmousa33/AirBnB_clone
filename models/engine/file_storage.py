@@ -5,21 +5,7 @@
 import datetime
 import os
 import json
-
-
-class BaseModel:
-    """
-        re-declaring a class baseModel
-    """
-    def __init__(self, dict1):
-        self.__dict__.update(dict1)
-
-
-def dict2obj(dict1):
-    """
-        convert a dict representation to a dictionary
-    """
-    return json.loads(json.dumps(dict1), object_hook=BaseModel)
+import copy
 
 
 class FileStorage:
@@ -40,21 +26,38 @@ class FileStorage:
             Initialises the (all) method of the instance/class
             :return:  FileStorage.__objects
         """
+
         def gt(dt_str):
+            """
+                reversing an isofomarted date
+            """
             dt, _, us = dt_str.partition(".")
             dt = datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
             us = int(us.rstrip("Z"), 10)
             return dt + datetime.timedelta(microseconds=us)
 
-        all_keys = FileStorage.__objects.keys()
+        final2 = copy.deepcopy(FileStorage.__objects)
+        all_keys2 = final2.keys()
+        final = {}
+        for key in all_keys2:
+            if type(final2[key]) == dict:
+                if final2[key]['__class__'] == "BaseModel":
+                    from models.base_model import BaseModel
+                    final.update({key: BaseModel(**final2[key])})
+                else:  # if final2[key]['__class__'] == "User"  to be updated 
+                    from models.user import User  # when new child classes are added
+                    final.update({key: User(**final2[key])})
+            else:
+                final.update({key: final2[key]})
+
+        all_keys = final.keys()
         for key in all_keys:
-            del FileStorage.__objects[key]["__class__"]
-            FileStorage.__objects[key] = dict2obj(FileStorage.__objects[key])
-            frmtd_date = gt(FileStorage.__objects[key].__dict__["created_at"])
-            FileStorage.__objects[key].__dict__["created_at"] = frmtd_date
-            frmtd_date = gt(FileStorage.__objects[key].__dict__["updated_at"])
-            FileStorage.__objects[key].__dict__["updated_at"] = frmtd_date
-        return FileStorage.__objects
+            del final[key].to_dict()["__class__"]
+            frmtd_date = gt(final[key].to_dict()["created_at"])
+            final[key].to_dict()["created_at"] = frmtd_date
+            frmtd_date = gt(final[key].to_dict()["updated_at"])
+            final[key].to_dict()["updated_at"] = frmtd_date
+        return final
 
     def new(self, obj):
         """
@@ -62,9 +65,9 @@ class FileStorage:
         """
         if obj:
             if obj.to_dict()['__class__'] != "BaseModel":
-                FileStorage.__objects.update({f"{obj.to_dict()['__class__']}.{obj.to_dict()['id']}": obj.to_dict()})
+                FileStorage.__objects.update({f"{obj.to_dict()['__class__']}.{obj.to_dict()['id']}": obj})
             else:
-                a = {f"{obj.to_dict()['__class__']}.{obj.to_dict()['id']}": obj.to_dict()}
+                a = {f"{obj.to_dict()['__class__']}.{obj.to_dict()['id']}": obj}
                 a.update(FileStorage.__objects)
                 FileStorage.__objects = a
 
@@ -73,12 +76,20 @@ class FileStorage:
             Initialises the (save) method of the instance/class
         """
         filename = f"{FileStorage.__file_path}"
+        keep_me2 = copy.deepcopy(FileStorage.__objects)
+        keep_me = {}
+        for key in keep_me2.keys():
+            if type(keep_me2[key]) != dict:
+                keep_me.update({key: keep_me2[key].to_dict()})
+            else:
+                keep_me.update({key: keep_me2[key]})
+
         if os.path.isfile(filename):
             with open(filename, mode="w", encoding="utf-8") as file:
-                file.write(json.dumps(FileStorage.__objects))
+                file.write(json.dumps(keep_me))
         else:
             with open(filename, mode="w", encoding="utf-8") as file:
-                file.write(json.dumps(FileStorage.__objects))
+                file.write(json.dumps(keep_me))
 
     def reload(self):
         """
